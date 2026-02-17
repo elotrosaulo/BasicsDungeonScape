@@ -14,7 +14,6 @@ UMover::UMover()
 	// ...
 }
 
-
 // Called when the game starts
 void UMover::BeginPlay()
 {
@@ -50,6 +49,7 @@ void UMover::BeginPlay()
 	//UE_LOG(LogTemp, Display, TEXT("%s is at location %s"), *GetOwner()->GetActorNameOrLabel(), *StartLocation.ToCompactString());
 
 	StartLocation = GetOwner()->GetActorLocation();
+	SetShouldMove(false);
 }
 
 
@@ -57,17 +57,6 @@ void UMover::BeginPlay()
 void UMover::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (ShouldMove)
-	{
-		// Target Location is start location + move offset	
-		TargetLocation = StartLocation + MoveOffset;
-	}
-	else
-	{
-		// Target Location is start location
-		TargetLocation = StartLocation;
-	}
 
 	FVector CurrentLocation = GetOwner()->GetActorLocation();
 	ReachedTarget = CurrentLocation.Equals(TargetLocation);
@@ -83,3 +72,23 @@ void UMover::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponent
 	}
 }
 
+bool UMover::GetShouldMove()
+{
+	return ShouldMove;
+}
+
+void UMover::SetShouldMove(bool NewShouldMove)
+{
+	ShouldMove = NewShouldMove;
+
+	if (ShouldMove)
+	{
+		// Target Location is start location + move offset	
+		TargetLocation = StartLocation + MoveOffset;
+	}
+	else
+	{
+		// Target Location is start location
+		TargetLocation = StartLocation;
+	}
+}
