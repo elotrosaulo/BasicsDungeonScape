@@ -10,6 +10,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "DungeonEscape.h"
 
+#include "CollectableItem.h"
+#include "Lock.h"
+
 ADungeonEscapeCharacter::ADungeonEscapeCharacter()
 {
 	// Set size for collision capsule
@@ -71,7 +74,76 @@ void ADungeonEscapeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerI
 
 void ADungeonEscapeCharacter::Interact()
 {
-	UE_LOG(LogTemp, Display, TEXT("INTERACT!"));
+	FVector Start = FirstPersonCameraComponent->GetComponentLocation();
+	FVector End = Start + (FirstPersonCameraComponent->GetForwardVector() * MaxInteractionDistance);
+
+	// Draw a debug line:
+	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 5.0f);	// bool is persistent in time, and float the duration of the line
+
+	// Draw debug spheres at the start and end of the line
+	FCollisionShape InteractionSphere = FCollisionShape::MakeSphere(InteractionSphereRadius);
+	DrawDebugSphere(GetWorld(), End, InteractionSphereRadius, 20, FColor::Yellow, false, 5.0f);
+
+	FHitResult HitResult;
+	bool HasHit = GetWorld()->SweepSingleByChannel(
+		HitResult, 
+		Start, 
+		End, 
+		FQuat::Identity, 
+		ECC_GameTraceChannel2, // We get this after creating a new trace channel in Unreal Editor, and after going to the project folder/Config/DefaultEngine.ini (ope with Notepad), and looking for the Channel of the trace (in our case, Name = Interact, Channel = ECC_GameTraceChannel2)
+		InteractionSphere
+	);
+
+	if (HasHit)
+	{
+		AActor* HitActor = HitResult.GetActor();
+		if (HitActor->ActorHasTag("CollectableItem"))
+		{
+			// HitActor is a collectable item
+			// To cast it to another class, do not forget to include the class' header file
+			ACollectableItem* CollectableItem = Cast<ACollectableItem>(HitActor);
+			if (CollectableItem)
+			{
+				// Add it to the array
+				ItemList.Add(CollectableItem->ItemName);
+
+				// Destroy the Collectable Item
+				CollectableItem->Destroy();
+			}
+		}
+		else if (HitActor->ActorHasTag("Lock"))
+		{
+			// HitActor is a lock actor
+			ALock* LockActor = Cast<ALock>(HitActor);
+			if (LockActor)
+			{
+				// Check if the lock empty.
+				if (!LockActor->GetIsKeyPlaced())
+				{
+					// Lock is empty
+					int32 ItemsRemoved = ItemList.RemoveSingle(LockActor->KeyItemName); // if it removed, this will return 1. If not, it will return 0
+					if (ItemsRemoved)	
+					{
+						LockActor->SetIsKeyPlaced(true);
+					}
+					else
+					{
+						UE_LOG(LogTemp, Display, TEXT("Key Item not in inventory"));
+					}
+				}
+				else
+				{
+					// Lock has a key inside. Take the item back...
+					ItemList.Add(LockActor->KeyItemName);
+					LockActor->SetIsKeyPlaced(false);
+				}
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Display, TEXT("No actor hit!"));
+	}
 }
 
 
