@@ -26,13 +26,15 @@ void ALock::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetIsKeyPlaced(true);
+	SetIsKeyPlaced(false);
 }
 
 // Called every frame
 void ALock::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	//UE_LOG(LogTemp, Display, TEXT("Time in seconds is %f"), GetWorld()->TimeSeconds);
 
 }
 

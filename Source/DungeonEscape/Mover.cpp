@@ -68,7 +68,7 @@ void UMover::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponent
 
 		GetOwner()->SetActorLocation(NewLocation);
 
-		UE_LOG(LogTemp, Display, TEXT("Mover is moving"));
+		//UE_LOG(LogTemp, Display, TEXT("Mover is moving"));
 	}
 }
 
